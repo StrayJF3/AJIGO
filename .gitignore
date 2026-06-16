@@ -1,0 +1,16 @@
+
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Variables de entorno (contienen credenciales y contraseñas)
+.env
+.env.production
+app/.env
+
+frontend/node_modules/
+frontend/dist/
+
+.DS_Store
+*.sw?
