@@ -1,7 +1,0 @@
-fastapi
-uvicorn
-sqlmodel
-python-dotenv
-pyodbc
-boto3
-python-multipart
