@@ -52,7 +52,7 @@ GO
 CREATE TABLE RESTAURANTES (
     RestauranteID INT IDENTITY(1,1) NOT NULL,
     NombreRestaurante NVARCHAR(150) NOT NULL,
-    LogoURL NVARCHAR(500) NULL,
+    LogoURL NVARCHAR(MAX) NULL,
     Descripcion NVARCHAR(500) NULL,
     Activo BIT NOT NULL,
     Slug NVARCHAR(100) NOT NULL,
@@ -100,7 +100,7 @@ CREATE TABLE PRODUCTOS (
     CategoriaID INT NOT NULL,           
     NombreProducto NVARCHAR(150) NOT NULL,
     Descripcion NVARCHAR(500) NULL,
-    ImagenURL NVARCHAR(500) NULL,
+    ImagenURL NVARCHAR(MAX) NULL,
     Precio FLOAT NOT NULL,
     Stock INT NOT NULL,
     Activo BIT NOT NULL,
@@ -213,7 +213,7 @@ CREATE TABLE PAGOS (
     MetodoPagoID INT NOT NULL,
     Monto FLOAT NOT NULL,
     EstadoPago NVARCHAR(50) NOT NULL,
-    ComprobanteURL NVARCHAR(500) NULL,
+    ComprobanteURL NVARCHAR(MAX) NULL,
     FechaPago DATETIME NULL,
     CONSTRAINT PK_PAGOS PRIMARY KEY (PagoID),
     CONSTRAINT FK_PAGOS_PEDIDOS FOREIGN KEY (PedidoID)
@@ -411,7 +411,7 @@ GO
 
 CREATE TRIGGER TRG_CARRITO_SUCURSAL_UNICA
 ON CARRITO_ITEMS
-INSTEAD OF INSERT
+AFTER INSERT
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -423,16 +423,15 @@ BEGIN
     )
     BEGIN
         RAISERROR('No puedes agregar productos de distintas sucursales al mismo carrito.', 16, 1);
+        ROLLBACK TRANSACTION;
         RETURN;
     END
-    INSERT INTO CARRITO_ITEMS (CarritoID, ProductoID, Cantidad, Notas)
-    SELECT CarritoID, ProductoID, Cantidad, Notas FROM inserted;
 END;
 GO
 
 CREATE TRIGGER TRG_RESENA_VALIDAR_PEDIDO
 ON RESENAS
-INSTEAD OF INSERT
+AFTER INSERT
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -443,16 +442,15 @@ BEGIN
     )
     BEGIN
         RAISERROR('Solo puedes resenar un pedido que ya fue entregado.', 16, 1);
+        ROLLBACK TRANSACTION;
         RETURN;
     END
-    INSERT INTO RESENAS (PedidoID, Puntuacion, Comentario, FechaResena)
-    SELECT PedidoID, Puntuacion, Comentario, FechaResena FROM inserted;
 END;
 GO
 
 CREATE TRIGGER TRG_ENVIO_SOLO_REPARTIDOR
 ON ENVIOS
-INSTEAD OF INSERT
+AFTER INSERT
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -463,11 +461,9 @@ BEGIN
     )
     BEGIN
         RAISERROR('El usuario asignado al envio debe tener el rol de Repartidor.', 16, 1);
+        ROLLBACK TRANSACTION;
         RETURN;
     END
-    -- ✅ FIX: EnvioID es IDENTITY, no se inserta manualmente
-    INSERT INTO ENVIOS (PedidoID, UsuarioID, EstadoID, FechaInicio, FechaEntrega)
-    SELECT PedidoID, UsuarioID, EstadoID, FechaInicio, FechaEntrega FROM inserted;
 END;
 GO
 
@@ -477,6 +473,15 @@ INSERT INTO ROLES (RolSTR, FechaCreacion) VALUES
     ('Repartidor',     GETDATE()),  -- RolID = 2
     ('Administrador',  GETDATE()),  -- RolID = 3
     ('Usuario Maestro', GETDATE()); -- RolID = 4
+GO
+
+-- INSERTA LAS CATEGORIAS DE PRODUCTOS
+INSERT INTO CATEGORIAS (NombreCategoria) VALUES 
+    ('Bebida'),
+    ('Postre'),
+    ('Entrada'),
+    ('Plato Fuerte'),
+    ('Sándwich');
 GO
 
 -- INSERTA LOS METODOS DE PAGO (MEDIOS ADMITIDOS PARA CANCELAR PEDIDOS)
@@ -510,11 +515,6 @@ GO
 -- INSERTA LOS SECTORES (AREAS DE LOGISTICA Y UBICACION)
 INSERT INTO SECTORES (SectorSTR) VALUES 
     ('UIDE Campus');
-GO
-
--- INSERTA LAS CATEGORIAS (CLASIFICACION DE PRODUCTOS EN LA BASE DE DATOS)
-INSERT INTO CATEGORIAS (NombreCategoria) VALUES 
-    ('General');
 GO
 
 -- INSERTA LOS RESTAURANTES (COMERCIOS ASOCIADOS EN EL CAMPUS UIDE)
