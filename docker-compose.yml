@@ -10,7 +10,7 @@ services:
     ports:
       - "8001:8000"
     env_file:
-      - .env.production
+      - .env
     restart: unless-stopped
 
   usuarios:
@@ -21,7 +21,7 @@ services:
     ports:
       - "8002:8000"
     env_file:
-      - .env.production
+      - .env
     restart: unless-stopped
 
   catalogo:
@@ -32,7 +32,7 @@ services:
     ports:
       - "8003:8000"
     env_file:
-      - .env.production
+      - .env
     restart: unless-stopped
 
   pedidos:
@@ -43,5 +43,5 @@ services:
     ports:
       - "8004:8000"
     env_file:
-      - .env.production
+      - .env
     restart: unless-stopped
